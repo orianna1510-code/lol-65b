@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import { JetBrains_Mono, Inter } from "next/font/google";
+import { AuthProvider } from "@/components/auth/auth-provider";
+import { Navbar } from "@/components/layout/navbar";
 import "./globals.css";
 
 const jetbrainsMono = JetBrains_Mono({
@@ -45,7 +47,10 @@ export default function RootLayout({
       <body
         className={`${jetbrainsMono.variable} ${inter.variable} font-sans antialiased bg-base text-zinc-100`}
       >
-        {children}
+        <AuthProvider>
+          <Navbar />
+          {children}
+        </AuthProvider>
       </body>
     </html>
   );
