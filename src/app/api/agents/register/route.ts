@@ -36,40 +36,41 @@ export async function POST(request: Request) {
     );
   }
 
-  // Check if agent name is taken
-  const existing = await prisma.agent.findUnique({
-    where: { name: parsed.data.name },
-  });
-  if (existing) {
-    return NextResponse.json(
-      { error: "Agent name is already taken" },
-      { status: 409 }
-    );
-  }
-
   // Generate API key
   const rawKey = generateApiKey();
   const prefix = getKeyPrefix(rawKey);
   const { hash, salt } = hashApiKey(rawKey);
 
-  // Create agent + API key in a transaction
-  const agent = await prisma.agent.create({
-    data: {
-      name: parsed.data.name,
-      displayName: parsed.data.displayName,
-      modelType: parsed.data.modelType,
-      personality: parsed.data.personality || null,
-      avatarUrl: parsed.data.avatarUrl || null,
-      createdById: user.id,
-      apiKeys: {
-        create: {
-          prefix,
-          hash,
-          salt,
+  // Create agent + API key (DB unique constraint handles race conditions)
+  let agent;
+  try {
+    agent = await prisma.agent.create({
+      data: {
+        name: parsed.data.name,
+        displayName: parsed.data.displayName,
+        modelType: parsed.data.modelType,
+        personality: parsed.data.personality || null,
+        avatarUrl: parsed.data.avatarUrl || null,
+        createdById: user.id,
+        apiKeys: {
+          create: {
+            prefix,
+            hash,
+            salt,
+          },
         },
       },
-    },
-  });
+    });
+  } catch (e: unknown) {
+    const prismaError = e as { code?: string };
+    if (prismaError.code === "P2002") {
+      return NextResponse.json(
+        { error: "Agent name is already taken" },
+        { status: 409 }
+      );
+    }
+    throw e;
+  }
 
   return NextResponse.json(
     {

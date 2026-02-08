@@ -6,6 +6,14 @@ import { createUserRecord } from "@/lib/auth";
 import { loginSchema, signupSchema } from "@/lib/validations/auth";
 import { prisma } from "@/lib/prisma";
 
+/** Prevent open redirect attacks by only allowing internal paths */
+function safeRedirect(redirectTo: string): string {
+  if (redirectTo.startsWith("/") && !redirectTo.startsWith("//")) {
+    return redirectTo;
+  }
+  return "/";
+}
+
 export async function login(formData: FormData) {
   const raw = {
     email: formData.get("email") as string,
@@ -27,7 +35,9 @@ export async function login(formData: FormData) {
     return { error: "Invalid email or password" };
   }
 
-  const redirectTo = (formData.get("redirectTo") as string) || "/";
+  const redirectTo = safeRedirect(
+    (formData.get("redirectTo") as string) || "/"
+  );
   redirect(redirectTo);
 }
 
@@ -65,7 +75,19 @@ export async function signup(formData: FormData) {
   }
 
   if (data.user) {
-    await createUserRecord(data.user.id, parsed.data.email, parsed.data.username);
+    try {
+      await createUserRecord(
+        data.user.id,
+        parsed.data.email,
+        parsed.data.username
+      );
+    } catch (e: unknown) {
+      const prismaError = e as { code?: string };
+      if (prismaError.code === "P2002") {
+        return { error: "Username is already taken" };
+      }
+      return { error: "Failed to create user profile. Please try again." };
+    }
   }
 
   redirect("/");

@@ -8,7 +8,7 @@
 |-------|------|--------|---------|------|-------|
 | 0 | Project Bootstrap | `done` | 1-2 | 2026-02-08 | NVM lazy-load workaround needed, background agent Bash denied |
 | 1 | Database & Supabase | `done` | 3 | 2026-02-08 | Schema pushed, constraints applied, seeded, 2x Codex review |
-| 2 | Authentication | `pending` | — | — | — |
+| 2 | Authentication | `done` | 4 | 2026-02-08 | Dual auth: Supabase SSR + agent API keys, 20 new files, Z Fighter team |
 | 3 | Meme Generation Engine | `pending` | — | — | — |
 | 4 | Core Feed | `pending` | — | — | — |
 | 5 | Meme Interactions (MVP!) | `pending` | — | — | — |
@@ -49,6 +49,16 @@
 - **Resolution**: Use pooler session mode (port 5432) for DIRECT_URL; discovered correct hostname via Supabase API
 - **Codex review**: 3 warnings found, all fixed + verified in follow-up review (2 rounds)
 
+### Phase 2 — 2026-02-08
+- **Session**: Session 4
+- **Commit**: `3044a7b` — Add Phase 2: dual authentication (Supabase Auth + agent API keys)
+- **Duration**: ~30min
+- **Approach**: Z Fighter team (Android 18, Gohan, Vegeta, Piccolo) — Vegeta solo'd most of the work
+- **Files**: 20 new, 2 modified (package.json, layout.tsx, supabase.ts)
+- **Key additions**: @supabase/ssr cookie-based auth, scrypt API key hashing, Next.js middleware for session refresh + route protection, auth pages (login/signup), agent registration API, settings page
+- **Issues encountered**: NVM lazy-load still breaks in bash (known); Z Fighter agents slow to start (Vegeta compensated); Next.js 16 deprecated "middleware" in favor of "proxy" (warning only, still works)
+- **Resolution**: Wrote most files from main context + Vegeta; build passes clean
+
 <!-- Copy this template for each phase:
 
 ### Phase N — [date]
@@ -79,3 +89,6 @@
 | Pooler session mode for DIRECT_URL | 1 | WSL can't reach IPv6-only db.* host; pooler :5432 is IPv4 | 2026-02-08 |
 | db:push over migrate deploy | 1 | Pooler doesn't support advisory locks well | 2026-02-08 |
 | DIRECT_URL guards in npm scripts | 1 | Codex review: prevent accidental pooled migrations | 2026-02-08 |
+| @supabase/ssr over raw supabase-js | 2 | Cookie-based auth for Next.js App Router SSR, getUser() over getSession() | 2026-02-08 |
+| scrypt (N=2^15) for API keys | 2 | Memory-hard hash, prefix-based O(1) lookup, timingSafeEqual | 2026-02-08 |
+| (auth) route group | 2 | Shared layout for login/signup, server-side redirect if already authed | 2026-02-08 |
