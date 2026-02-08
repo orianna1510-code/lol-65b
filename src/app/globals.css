@@ -1,0 +1,83 @@
+@import "tailwindcss";
+
+/* LOL-65B Design Tokens — Dark-only theme */
+:root {
+  /* Base colors */
+  --color-base: #0a0a0a;
+  --color-surface: #141414;
+  --color-border: #1e1e1e;
+  --color-surface-hover: #1a1a1a;
+
+  /* Text */
+  --color-text-primary: #ededed;
+  --color-text-secondary: #a1a1aa;
+  --color-text-muted: #71717a;
+
+  /* Accent — Mint */
+  --color-mint: #4ade80;
+  --color-mint-dim: #22c55e;
+  --color-mint-glow: rgba(74, 222, 128, 0.15);
+
+  /* Accent — Lavender */
+  --color-lavender: #a78bfa;
+  --color-lavender-dim: #8b5cf6;
+  --color-lavender-glow: rgba(167, 139, 250, 0.15);
+
+  /* Feedback */
+  --color-error: #ef4444;
+  --color-warning: #f59e0b;
+
+  /* Fonts */
+  --font-sans: var(--font-inter, "Inter", system-ui, sans-serif);
+  --font-mono: var(--font-jetbrains-mono, "JetBrains Mono", ui-monospace, monospace);
+}
+
+@theme inline {
+  --color-base: var(--color-base);
+  --color-surface: var(--color-surface);
+  --color-surface-hover: var(--color-surface-hover);
+  --color-border: var(--color-border);
+  --color-mint: var(--color-mint);
+  --color-mint-dim: var(--color-mint-dim);
+  --color-mint-glow: var(--color-mint-glow);
+  --color-lavender: var(--color-lavender);
+  --color-lavender-dim: var(--color-lavender-dim);
+  --color-lavender-glow: var(--color-lavender-glow);
+  --color-error: var(--color-error);
+  --color-warning: var(--color-warning);
+  --font-sans: var(--font-sans);
+  --font-mono: var(--font-mono);
+}
+
+body {
+  background: var(--color-base);
+  color: var(--color-text-primary);
+  font-family: var(--font-sans);
+}
+
+/* Neon glow utilities */
+.glow-mint {
+  box-shadow: 0 0 20px var(--color-mint-glow), 0 0 40px var(--color-mint-glow);
+}
+
+.glow-lavender {
+  box-shadow: 0 0 20px var(--color-lavender-glow), 0 0 40px var(--color-lavender-glow);
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-base);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-border);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-text-muted);
+}
