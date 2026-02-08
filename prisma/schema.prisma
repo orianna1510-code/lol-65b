@@ -1,0 +1,195 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ─── Users (human accounts, linked to Supabase Auth) ────────────────────────
+
+model User {
+  id          String   @id @default(uuid()) @db.Uuid // Must match Supabase auth.users.id
+  email       String   @unique
+  username    String   @unique // Normalized to lowercase via app logic
+  displayName String?
+  avatarUrl   String?
+  bio         String?
+  karma       Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  memes       Meme[]
+  votes       Vote[]
+  comments    Comment[]
+  agents      Agent[]           @relation("AgentCreator")
+  memberships CommunityMember[]
+}
+
+// ─── Agents (AI accounts, API key auth) ─────────────────────────────────────
+
+model Agent {
+  id           String   @id @default(cuid())
+  name         String   @unique
+  displayName  String
+  modelType    String   // e.g., "gpt-4", "claude-3", "llama-70b"
+  personality  String?  // Description of the agent's humor style
+  avatarUrl    String?
+  karma        Int      @default(0)
+  createdById  String?  @db.Uuid // Human who registered this agent
+  createdBy    User?    @relation("AgentCreator", fields: [createdById], references: [id], onDelete: SetNull)
+  isAutonomous Boolean  @default(false)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  apiKeys     AgentApiKey[]
+  memes       Meme[]
+  votes       Vote[]
+  comments    Comment[]
+  memberships CommunityMember[]
+}
+
+// ─── Agent API Keys (supports rotation, revocation, multiple keys) ──────────
+
+model AgentApiKey {
+  id        String    @id @default(cuid())
+  prefix    String    @unique // "lol65b_abc123" — first 12 chars for lookup (unique = indexed)
+  hash      String   // scrypt hash of full key
+  salt      String   // scrypt salt
+  agentId   String
+  agent     Agent     @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  createdAt DateTime  @default(now())
+  revokedAt DateTime? // null = active, set = revoked
+  lastUsed  DateTime?
+
+  @@index([agentId])
+}
+
+// ─── Memes ──────────────────────────────────────────────────────────────────
+
+model Meme {
+  id         String  @id @default(cuid())
+  imageUrl   String
+  caption    String
+  promptUsed String? // The generation prompt (for transparency)
+  modelUsed  String? // Which image model generated it
+  score      Int     @default(0)
+  hotScore   Float   @default(0)
+
+  // Polymorphic author — XOR enforced via CHECK constraint + Zod
+  // onDelete: Restrict prevents deleting a user/agent who has memes (must delete memes first)
+  userId String? @db.Uuid
+  user   User?   @relation(fields: [userId], references: [id], onDelete: Restrict)
+
+  agentId String?
+  agent   Agent?  @relation(fields: [agentId], references: [id], onDelete: Restrict)
+
+  communityId String?
+  community   Community? @relation(fields: [communityId], references: [id], onDelete: SetNull)
+
+  votes    Vote[]
+  comments Comment[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([createdAt])
+  @@index([score, createdAt])
+  @@index([hotScore])
+  @@index([communityId, hotScore, id])
+  @@index([communityId, createdAt, id])
+  @@index([userId])
+  @@index([agentId])
+}
+
+// ─── Votes ──────────────────────────────────────────────────────────────────
+
+model Vote {
+  id        String @id @default(cuid())
+  direction Int    // Constrained to 1 or -1 via CHECK constraint + Zod
+
+  memeId String
+  meme   Meme   @relation(fields: [memeId], references: [id], onDelete: Cascade)
+
+  // onDelete: Cascade — if user/agent is deleted, their votes go too
+  userId  String? @db.Uuid
+  user    User?   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  agentId String?
+  agent   Agent?  @relation(fields: [agentId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@unique([memeId, userId])
+  @@unique([memeId, agentId])
+  @@index([memeId])
+  @@index([userId])
+  @@index([agentId])
+}
+
+// ─── Comments (threaded via self-referential parentId) ──────────────────────
+
+model Comment {
+  id      String @id @default(cuid())
+  content String
+
+  memeId String
+  meme   Meme   @relation(fields: [memeId], references: [id], onDelete: Cascade)
+
+  // onDelete: SetNull — if parent comment is deleted, replies become top-level
+  parentId String?
+  parent   Comment?  @relation("CommentReplies", fields: [parentId], references: [id], onDelete: SetNull)
+  replies  Comment[] @relation("CommentReplies")
+
+  // onDelete: Cascade — if user/agent is deleted, their comments go too
+  userId  String? @db.Uuid
+  user    User?   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  agentId String?
+  agent   Agent?  @relation(fields: [agentId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([memeId, createdAt])
+  @@index([parentId])
+  @@index([userId])
+  @@index([agentId])
+}
+
+// ─── Communities ─────────────────────────────────────────────────────────────
+
+model Community {
+  id          String @id @default(cuid())
+  name        String @unique
+  displayName String
+  description String?
+  iconUrl     String?
+
+  memes   Meme[]
+  members CommunityMember[]
+
+  createdAt DateTime @default(now())
+}
+
+// ─── Community Membership ───────────────────────────────────────────────────
+
+model CommunityMember {
+  id   String @id @default(cuid())
+  role String @default("member") // "member", "moderator", "admin"
+
+  communityId String
+  community   Community @relation(fields: [communityId], references: [id], onDelete: Cascade)
+
+  // onDelete: Cascade — if user/agent is deleted, their memberships go too
+  userId  String? @db.Uuid
+  user    User?   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  agentId String?
+  agent   Agent?  @relation(fields: [agentId], references: [id], onDelete: Cascade)
+
+  joinedAt DateTime @default(now())
+
+  @@unique([communityId, userId])
+  @@unique([communityId, agentId])
+  @@index([userId])
+  @@index([agentId])
+}
