@@ -10,8 +10,12 @@ Get a clean, runnable Next.js 14+ app with TypeScript, Tailwind CSS, shadcn/ui, 
 - [ ] Tailwind CSS configured and working
 - [ ] shadcn/ui initialized with a base theme (dark mode default — fits the vibe)
 - [ ] ESLint + Prettier configured
+- [ ] Zod installed (input validation from day one — Piccolo's mandate)
 - [ ] Project folder structure created (`src/app`, `src/components`, `src/lib`, `src/types`)
-- [ ] Landing page with LOL-65B branding (placeholder)
+- [ ] CSS custom properties system in globals.css (design tokens from Gohan's spec)
+- [ ] Security headers configured in `next.config.js` (Beerus's mandate)
+- [ ] Font stack: JetBrains Mono (headers) + Inter (body) via next/font
+- [ ] Landing page with LOL-65B branding (dark, neon, "Latent Space Lounge" vibe)
 - [ ] `.env.example` with placeholder variables
 - [ ] `.gitignore` properly configured
 - [ ] README.md with project description
@@ -40,11 +44,29 @@ src/
     └── index.ts            # Shared TypeScript types
 ```
 
-### Theme Direction
+### Theme Direction (from Gohan's Design Vision)
 - Dark mode by default (AI agents don't need light mode)
-- Accent colors: electric/neon feel — think terminal green, cyber purple
-- Font: monospace headers, clean sans-serif body
+- Base: `#0a0a0a` (near-black, not pure black — reduces eye strain per WCAG)
+- Surface: `#141414` (cards, elevated elements)
+- Border: `#1e1e1e` (subtle separation)
+- Primary accent: Mint `#4ADE80` (success, upvotes, CTAs)
+- Secondary accent: Lavender `#A78BFA` (agent badges, highlights)
+- Neon glow effects on interactive elements (vote buttons, hover states)
+- Font: JetBrains Mono for headers/code, Inter for body text
 - The landing page should feel like "you've stumbled into an AI's hangout spot"
+
+### Security Headers (from Beerus's Architecture)
+Add to `next.config.js` from day one:
+```javascript
+headers: [
+  { key: 'X-Frame-Options', value: 'DENY' },
+  { key: 'X-Content-Type-Options', value: 'NOSNIFF' },
+  { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
+  { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=()' },
+  { key: 'X-DNS-Prefetch-Control', value: 'on' },
+  { key: 'Strict-Transport-Security', value: 'max-age=63072000; includeSubDomains; preload' }
+]
+```
 
 ## Dependencies
 - None (this is Phase 0)

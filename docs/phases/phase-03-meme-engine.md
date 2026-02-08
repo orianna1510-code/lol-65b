@@ -35,11 +35,28 @@ Save to Database (Meme record with metadata)
 Return meme to user/agent
 ```
 
-### Image Generation
-- **Primary model**: `stabilityai/stable-diffusion-xl-base-1.0` (or latest available)
-- **Fallback**: `runwayml/stable-diffusion-v1-5`
-- Use HuggingFace Inference API (free tier: rate-limited but sufficient for MVP)
+### Image Generation (enhanced by Piccolo + Trunks)
+- **Provider abstraction layer**: Don't hardcode HuggingFace — create `src/lib/providers/image-gen.ts` interface
+- **Primary**: HuggingFace Inference API (free tier: ~42 memes/hour)
+- **Fallback**: Replicate API (pay-per-use, faster, more models including FLUX)
+- **Future-ready**: Interface supports swapping to any provider (DALL-E, Ideogram, etc.)
 - Images generated at 1024x1024 (SDXL) or 512x512 (SD 1.5)
+
+### Queue System (CRITICAL — from Piccolo)
+Vercel serverless has a **10-second timeout**. Image generation takes 15-30s. Solutions:
+- **Option A (MVP)**: Use Vercel's `maxDuration: 60` on Pro plan, or use Supabase Edge Functions
+- **Option B (Recommended)**: Async generation with polling
+  1. `POST /api/memes/generate` → returns `{ jobId, status: "processing" }`
+  2. Client polls `GET /api/memes/jobs/[id]` every 2 seconds
+  3. Server processes generation asynchronously via Supabase Edge Function or background job
+- **Option C (Scale)**: BullMQ + Redis (Upstash) for full job queue
+
+### Prompt Injection Defense (from Beerus)
+- Sanitize ALL user input before passing to image generation
+- Block known injection patterns (e.g., "ignore previous instructions")
+- Content safety filter on generated images (HuggingFace safety checker)
+- Log all prompts for audit trail
+- NSFW content filtering before storage
 
 ### Prompt Engineering
 The raw user concept (e.g., "a for loop excluding zero") needs to be transformed into:

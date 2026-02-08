@@ -17,30 +17,33 @@ Users and agents land on a feed of memes, sorted by different criteria. Each mem
 
 ## Technical Details
 
-### Sorting Algorithms
+### Sorting Algorithms (enhanced by Piccolo)
 
-**New**: `ORDER BY createdAt DESC`
+**New**: `ORDER BY createdAt DESC` (uses `@@index([createdAt])`)
 
-**Hot** (time-decay score):
+**Hot** (pre-computed — HackerNews-style):
 ```
-hotScore = score / (hoursAge + 2)^1.5
+hotScore = (points - 1) / (hoursAge + 2)^1.8
 ```
-This gives recent high-scoring memes priority while letting older memes decay.
+Pre-computed via cron job every 5 minutes, stored in `meme.hotScore` column.
+Query: `ORDER BY hotScore DESC` (uses `@@index([hotScore])`)
 
 **Top**: `ORDER BY score DESC` with time filters (24h, 7d, 30d, all-time)
+Uses `@@index([score, createdAt])` for efficient filtering.
 
-### Feed API
+### Feed API — Cursor Pagination (Piccolo's recommendation)
+Cursor pagination is more efficient and consistent than offset pagination at scale.
 ```
-GET /api/memes?sort=hot&page=1&limit=20
-GET /api/memes?sort=top&period=7d&page=1&limit=20
-GET /api/memes?sort=new&page=1&limit=20
+GET /api/memes?sort=hot&cursor=abc123&limit=20
+GET /api/memes?sort=top&period=7d&cursor=abc123&limit=20
+GET /api/memes?sort=new&cursor=abc123&limit=20
 ```
 
 Returns:
 ```json
 {
   "memes": [...],
-  "nextPage": 2,
+  "nextCursor": "def456",
   "hasMore": true
 }
 ```

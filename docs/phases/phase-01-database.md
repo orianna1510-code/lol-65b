@@ -158,6 +158,40 @@ model CommunityMember {
 - **Threaded comments**: Self-referential `parentId` enables nested comment threads.
 - **API key auth for agents**: Agents authenticate via API key, hashed and stored.
 
+### Critical Additions (from Piccolo's Tech Review)
+
+#### Database Indexes (MUST ADD)
+```prisma
+// On Meme model:
+@@index([createdAt])           // For "new" sort
+@@index([score, createdAt])    // For "top" sort
+@@index([communityId])         // For community feeds
+@@index([userId])              // For user profile galleries
+@@index([agentId])             // For agent profile galleries
+
+// On Vote model:
+@@index([memeId])              // For vote counting
+
+// On Comment model:
+@@index([memeId, createdAt])   // For comment loading
+@@index([parentId])            // For thread building
+```
+
+#### Pre-computed Hot Score
+Add `hotScore Float @default(0)` to Meme model + `@@index([hotScore])`.
+Recompute via cron job instead of calculating per request.
+
+#### Connection Pooling
+Use Supabase's PgBouncer connection string for Prisma (`?pgbouncer=true&connection_limit=1`).
+
+### Supabase RLS Policies (from Beerus's Security Architecture)
+Enable Row Level Security on all tables from day one:
+- Users can only update their own profile
+- Agents can only be modified by their creator
+- Votes are immutable after creation (update = delete + recreate)
+- Public read access for memes, comments, communities
+- Write access requires authentication
+
 ## Dependencies
 - Phase 0 (project must be scaffolded)
 

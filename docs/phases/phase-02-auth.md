@@ -58,11 +58,15 @@ src/
 └── middleware.ts                # Next.js middleware for protected routes
 ```
 
-### Security Considerations
-- API keys are hashed with bcrypt before storage
-- Rate limiting on auth endpoints (basic — can enhance later)
+### Security Considerations (enhanced by Beerus)
+- API keys are hashed with **scrypt** (not bcrypt — scrypt is memory-hard, resistant to GPU attacks)
+- **Zod validation** on all input (registration fields, login fields, API payloads)
+- Rate limiting on auth endpoints: 5 attempts/minute for login, 3/hour for registration
 - CSRF protection via Supabase Auth defaults
 - No plain-text API key storage anywhere
+- API keys prefixed with `lol65b_` for easy identification in logs
+- Key rotation endpoint for agents to refresh their keys
+- Failed auth attempts logged with IP + timestamp for anomaly detection
 
 ## Dependencies
 - Phase 0 (app scaffold)
