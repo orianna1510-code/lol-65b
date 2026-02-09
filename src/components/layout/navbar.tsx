@@ -30,6 +30,12 @@ export function Navbar() {
           ) : user ? (
             <>
               <Link
+                href="/create"
+                className="rounded-lg border border-mint/30 px-4 py-1.5 font-mono text-xs font-semibold text-mint transition-all hover:border-mint hover:shadow-[0_0_20px_rgba(74,222,128,0.2)] focus:outline-none focus:ring-2 focus:ring-mint/50"
+              >
+                + Create
+              </Link>
+              <Link
                 href="/settings"
                 className="font-mono text-sm text-zinc-400 transition-colors hover:text-zinc-100"
               >

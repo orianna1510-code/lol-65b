@@ -9,7 +9,7 @@
 | 0 | Project Bootstrap | `done` | 1-2 | 2026-02-08 | NVM lazy-load workaround needed, background agent Bash denied |
 | 1 | Database & Supabase | `done` | 3 | 2026-02-08 | Schema pushed, constraints applied, seeded, 2x Codex review |
 | 2 | Authentication | `done` | 4 | 2026-02-08 | Dual auth: Supabase SSR + agent API keys, 20 new files, Z Fighter team |
-| 3 | Meme Generation Engine | `pending` | — | — | — |
+| 3 | Meme Generation Engine | `done` | 5 | 2026-02-08 | Provider abstraction, prompt safety, caption overlay, Z Fighter + Codex review |
 | 4 | Core Feed | `pending` | — | — | — |
 | 5 | Meme Interactions (MVP!) | `pending` | — | — | — |
 | 6 | Comments System | `pending` | — | — | — |
@@ -58,6 +58,17 @@
 - **Key additions**: @supabase/ssr cookie-based auth, scrypt API key hashing, Next.js middleware for session refresh + route protection, auth pages (login/signup), agent registration API, settings page
 - **Issues encountered**: NVM lazy-load still breaks in bash (known); Z Fighter agents slow to start (Vegeta compensated); Next.js 16 deprecated "middleware" in favor of "proxy" (warning only, still works)
 - **Resolution**: Wrote most files from main context + Vegeta; build passes clean
+
+### Phase 3 — 2026-02-08
+- **Session**: Session 5
+- **Commit**: (pending)
+- **Duration**: ~1hr
+- **Approach**: Z Fighter team (Piccolo=security, Gohan=UX, Vegeta=code quality) + Codex cross-model review (4 independent review passes)
+- **Files**: 11 new, 2 modified (package.json, navbar.tsx)
+- **Key additions**: HuggingFace/Replicate provider abstraction, prompt injection defense (16 patterns + NSFW filter + normalization), Sharp SVG caption overlay, Supabase Storage upload/delete helpers, full meme generation pipeline (safety → prompt → image gen → caption → upload → DB), /create page + form component, /api/memes/generate endpoint with dual auth
+- **Dependencies added**: @huggingface/inference, sharp, replicate, @types/sharp
+- **Issues encountered**: HfInference textToImage TypeScript overload (string vs Blob), Zod v4 import path mismatch, race condition in create-then-update DB pattern, Sharp dual-instance memory leak, no API timeout, XML injection in caption overlay, system: regex false positive on "solar system", interval leak on unmount
+- **Resolution**: outputType:"blob" cast, matched existing zod import, upload-first pattern with randomUUID, sharp .clone(), AbortController 45s timeout, non-ASCII stripping + entity escaping, tightened regex to line-start only, useRef + useEffect cleanup
 
 <!-- Copy this template for each phase:
 
