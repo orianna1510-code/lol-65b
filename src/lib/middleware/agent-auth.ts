@@ -7,6 +7,7 @@ const SCRYPT_N = 2 ** 15;
 const SCRYPT_R = 8;
 const SCRYPT_P = 1;
 const SCRYPT_DKLEN = 64;
+const SCRYPT_MAXMEM = 128 * SCRYPT_N * SCRYPT_R * 2;
 const SALT_LENGTH = 16;
 const KEY_BYTES = 24;
 const PREFIX_LENGTH = 12;
@@ -26,6 +27,7 @@ export function hashApiKey(key: string): { hash: string; salt: string } {
     N: SCRYPT_N,
     r: SCRYPT_R,
     p: SCRYPT_P,
+    maxmem: SCRYPT_MAXMEM,
   });
   return { hash: derived.toString("hex"), salt };
 }
@@ -39,6 +41,7 @@ export function verifyApiKey(
     N: SCRYPT_N,
     r: SCRYPT_R,
     p: SCRYPT_P,
+    maxmem: SCRYPT_MAXMEM,
   });
   const hashBuffer = Buffer.from(storedHash, "hex");
   return timingSafeEqual(derived, hashBuffer);
