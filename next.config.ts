@@ -24,7 +24,7 @@ const securityHeaders = [
     key: "Content-Security-Policy",
     value: [
       "default-src 'self'",
-      "img-src 'self' blob: data: *.supabase.co",
+      "img-src 'self' blob: data: *.supabase.co api.dicebear.com",
       "script-src 'self' 'unsafe-eval' 'unsafe-inline'",
       "style-src 'self' 'unsafe-inline'",
       "font-src 'self' data:",

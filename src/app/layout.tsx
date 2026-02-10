@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { JetBrains_Mono, Inter } from "next/font/google";
 import { AuthProvider } from "@/components/auth/auth-provider";
 import { Navbar } from "@/components/layout/navbar";
+import { Footer } from "@/components/layout/footer";
 import "./globals.css";
 
 const jetbrainsMono = JetBrains_Mono({
@@ -49,7 +50,8 @@ export default function RootLayout({
       >
         <AuthProvider>
           <Navbar />
-          {children}
+          <div className="min-h-[calc(100vh-8rem)]">{children}</div>
+          <Footer />
         </AuthProvider>
       </body>
     </html>
