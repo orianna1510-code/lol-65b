@@ -13,7 +13,7 @@
 | 4 | Core Feed | `done` | 6 | 2026-02-09 | Feed API, cursor pagination, sort/period, infinite scroll, Codex-reviewed |
 | — | BYOK (cross-cutting) | `done` | 7 | 2026-02-09 | Encrypted provider key storage, BYOK enforcement, Settings UI, agent key API, Codex + Beerus reviewed |
 | 5 | Meme Interactions (MVP!) | `done` | 8 | 2026-02-09 | Vote API, optimistic UI, detail page, share button, Codex-reviewed (6 findings, all fixed) |
-| 6 | Comments System | `pending` | — | — | — |
+| 6 | Comments System | `done` | 9 | 2026-02-09 | Threaded comments, dual auth, comment count in feed, Codex-reviewed (6 findings, all fixed) |
 | 7 | Agent & User Profiles | `pending` | — | — | — |
 | 8 | Agent REST API | `pending` | — | — | — |
 | 9 | Communities | `pending` | — | — | — |
@@ -104,6 +104,16 @@
 - **Issues encountered**: None — cleanest phase yet
 - **MVP milestone reached**: sign up → generate meme → feed → vote → detail page
 
+### Phase 6 — 2026-02-09
+- **Session**: Session 9
+- **Commit**: `aa8f6fa` — Add Phase 6: Comments System with threaded replies
+- **Duration**: ~15min
+- **Approach**: Direct build + Codex cross-model review (4 warnings, 2 nits — all fixed)
+- **Files**: 8 new, 4 modified (+831 lines)
+- **Key additions**: Comment API (GET/POST/DELETE /api/memes/[id]/comments), threaded comment UI (3-level depth cap enforced server-side), CommentSection/CommentForm/CommentItem/CommentThread components, CommentCount on feed MemeCards, abort-safe fetch with loading reset, Zod validation (1-1000 chars), dual auth for all endpoints
+- **Codex findings fixed**: (1) WARNING — isOwn only checked human users, not agents: added agent auth to GET, (2) WARNING — unbounded nesting depth: added server-side ancestor walk + 3-level cap, (3) WARNING — fetch race could overwrite optimistic state: abort-signal guard on setState, (4) WARNING — no comment limit: added take:500 soft cap, (5) nit — loading not reset on memeId change: set loading=true in fetchComments, (6) nit — isOverLimit used raw length: switched to trimmed length
+- **Issues encountered**: None — clean phase
+
 <!-- Copy this template for each phase:
 
 ### Phase N — [date]
@@ -147,3 +157,6 @@
 | Serializable vote transactions | 5 | Prevents score drift from concurrent votes; P2002 handled gracefully | 2026-02-09 |
 | Optimistic UI with server reconciliation | 5 | Instant vote feedback; functional state updates prevent stale closures | 2026-02-09 |
 | userVote in feed API response | 5 | Batch-fetch user votes with feed (single extra query) vs per-card fetch | 2026-02-09 |
+| Server-side depth limit for comments | 6 | Ancestor walk caps nesting at 3; prevents unbounded recursion in UI | 2026-02-09 |
+| Flat comment fetch + client-side tree | 6 | Single query, client builds Map tree — simpler than recursive SQL | 2026-02-09 |
+| Comment soft cap (500) | 6 | Prevents unbounded memory on large threads; MVP scale | 2026-02-09 |
