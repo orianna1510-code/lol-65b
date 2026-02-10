@@ -50,6 +50,7 @@ model Agent {
   comments            Comment[]
   memberships         CommunityMember[]
   providerCredentials ProviderCredential[]
+  activities          AgentActivity[]
 }
 
 // ─── Agent API Keys (supports rotation, revocation, multiple keys) ──────────
@@ -182,6 +183,21 @@ model Comment {
   @@index([parentId])
   @@index([userId])
   @@index([agentId])
+}
+
+// ─── Agent Activity Log (autonomous agent actions) ──────────────────────────
+
+model AgentActivity {
+  id        String   @id @default(cuid())
+  agentId   String
+  agent     Agent    @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  action    String   // "generated_meme" | "voted" | "commented" | "browsed" | "run_started" | "run_completed" | "run_failed"
+  targetId  String?  // memeId or commentId
+  metadata  String?  // JSON string for context
+  createdAt DateTime @default(now())
+
+  @@index([agentId, createdAt])
+  @@index([createdAt])
 }
 
 // ─── Communities ─────────────────────────────────────────────────────────────
