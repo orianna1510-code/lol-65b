@@ -18,14 +18,14 @@
 | 8 | Agent REST API | `done` | 11 | 2026-02-09 | v1 REST API, rate limiter, agent auth wrapper, API docs page, Codex-reviewed (4 findings, 2 fixed) |
 | 9 | Communities | `done` | 12 | 2026-02-09 | Community CRUD, join/leave, filtered feeds, directory, 8 defaults seeded, Codex-reviewed (3 findings, 2 fixed) |
 | 10 | Autonomous Agent System | `done` | 13 | 2026-02-10 | 5 autonomous agents, LLM-driven memes/comments, admin dashboard, cron scheduling, Codex-reviewed (5 findings, 4 fixed) |
-| 11 | Polish & Deploy | `pending` | — | — | — |
+| 11 | Polish & Deploy | `done` | 14 | 2026-02-10 | CSP fix, error/404 pages, SEO (sitemap/robots/manifest/OG), hero banner, footer, README upgrade, Vercel deployed |
 
 ## Milestones
 
 - [x] **MVP** — Phase 5 complete (generation + feed + voting)
 - [x] **Social Platform** — Phase 7 complete (comments + profiles)
 - [x] **Agent Ecosystem** — Phase 10 complete (API + communities + autonomous bots)
-- [ ] **Public Launch** — Phase 11 complete (deployed and live)
+- [x] **Public Launch** — Phase 11 complete (deployed and live at https://lol-65b.vercel.app)
 
 ## Session Log
 
@@ -149,7 +149,7 @@
 
 ### Phase 10 — 2026-02-10
 - **Session**: Session 13
-- **Commit**: (pending)
+- **Commit**: `0dea828` — Add Phase 10 + remove client-side admin email exposure
 - **Duration**: ~20min
 - **Approach**: Z Fighter team (Gohan assigned admin dashboard) + lead handled all core agent logic. Codex cross-model review (5 warnings, 4 fixed, 1 deferred).
 - **Files**: 15 new, 3 modified (+1200 lines)
@@ -158,6 +158,18 @@
 - **Codex deferred**: (5) WARNING — NEXT_PUBLIC_ADMIN_EMAIL exposes admin email client-side (UI-only, server enforces auth)
 - **Issues encountered**: Lead was faster than Z Fighter (Gohan); completed all files before teammate could start
 - **Resolution**: Shut down Gohan, lead handled everything directly
+
+### Phase 11 — 2026-02-10
+- **Session**: Session 14
+- **Commits**: `8abfee3` — Phase 11 polish, `d69ff42` — cron fix, `8066f06` — middleware fix
+- **Duration**: ~20min
+- **Approach**: Direct build, no Z Fighter team needed (all code changes + Vercel API deployment)
+- **Files**: 9 new, 6 modified (+466 lines)
+- **Key additions**: CSP header fix (api.dicebear.com for DiceBear avatars), global error boundary with retry, custom 404 page with branding, dynamic sitemap (memes/communities/users/agents), robots.txt, web app manifest (PWA metadata), edge-rendered OG image, hero welcome banner, site footer, .env.example updated with Phase 10 vars, full README rewrite (features, tech stack table, deploy guide, env var reference)
+- **Deployment**: Vercel Hobby tier at https://lol-65b.vercel.app. 11 env vars set via API. Cron changed to daily (Hobby limit). Middleware updated to allow public access to SEO routes, content pages, and community/profile/meme detail pages.
+- **Verification**: Homepage 200, robots.txt valid, sitemap.xml with dynamic routes, manifest.webmanifest valid JSON, OG image 200 (image/png), communities 200, API docs 200, cron 401 (correct — needs auth), cron with auth 200.
+- **Issues encountered**: (1) Community model has no updatedAt — used createdAt instead, (2) Vercel Hobby cron limit — changed from every 4h to daily, (3) Middleware blocking sitemap/robots/public pages — expanded public route list
+- **Resolution**: All fixed inline before deploy
 
 <!-- Copy this template for each phase:
 
@@ -223,7 +235,7 @@
 | HF Inference chatCompletion for text gen | 10 | Zero new deps — reuse @huggingface/inference with Mistral-7B-Instruct | 2026-02-10 |
 | Direct generateMeme() call | 10 | No self-HTTP in serverless; no rate limit competition with external agents | 2026-02-10 |
 | Env fallback for system agents | 10 | Platform-owned agents use platform API keys; no BYOK needed | 2026-02-10 |
-| Vercel Cron every 4 hours | 10 | Standard pattern; stochastic agent selection (1-3 per batch) | 2026-02-10 |
+| Vercel Cron daily (Hobby tier) | 10/11 | Hobby plan limits to 1/day; changed from every 4 hours to daily at noon UTC | 2026-02-10 |
 | Sequential agent execution | 10 | Avoid overwhelming image gen with parallel requests | 2026-02-10 |
 | AgentActivity tracking model | 10 | Non-fatal logging; queryable dashboard data; composite indexes | 2026-02-10 |
 | ADMIN_EMAIL env var check | 10 | Simple MVP admin protection; server-side enforced on all actions | 2026-02-10 |
