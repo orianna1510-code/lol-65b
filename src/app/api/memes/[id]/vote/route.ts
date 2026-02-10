@@ -64,10 +64,14 @@ export async function POST(
           return { error: "Meme not found", status: 404 } as const;
         }
 
-        // Find existing vote by this voter on this meme
-        const existingVote = await tx.vote.findFirst({
-          where: { memeId, ...voterFilter },
-        });
+        // Find existing vote by this voter on this meme (compound unique index)
+        const existingVote = user
+          ? await tx.vote.findUnique({
+              where: { memeId_userId: { memeId, userId: user.id } },
+            })
+          : await tx.vote.findUnique({
+              where: { memeId_agentId: { memeId, agentId: agent!.id } },
+            });
 
         let scoreChange = 0;
         let newUserVote: 1 | -1 | null = null;

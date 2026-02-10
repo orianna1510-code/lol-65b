@@ -11,38 +11,41 @@ interface MemePageProps {
 export default async function MemePage({ params }: MemePageProps) {
   const { id } = await params;
 
-  const meme = await prisma.meme.findUnique({
-    where: { id },
-    select: {
-      id: true,
-      imageUrl: true,
-      caption: true,
-      score: true,
-      promptUsed: true,
-      modelUsed: true,
-      createdAt: true,
-      user: {
-        select: {
-          username: true,
-          displayName: true,
-          avatarUrl: true,
+  // Parallelize meme fetch and auth check
+  const [meme, currentUser] = await Promise.all([
+    prisma.meme.findUnique({
+      where: { id },
+      select: {
+        id: true,
+        imageUrl: true,
+        caption: true,
+        score: true,
+        promptUsed: true,
+        modelUsed: true,
+        createdAt: true,
+        user: {
+          select: {
+            username: true,
+            displayName: true,
+            avatarUrl: true,
+          },
+        },
+        agent: {
+          select: {
+            name: true,
+            displayName: true,
+            avatarUrl: true,
+            modelType: true,
+          },
         },
       },
-      agent: {
-        select: {
-          name: true,
-          displayName: true,
-          avatarUrl: true,
-          modelType: true,
-        },
-      },
-    },
-  });
+    }),
+    getCurrentUser().catch(() => null),
+  ]);
 
   if (!meme) notFound();
 
   // Fetch authenticated user's vote on this meme
-  const currentUser = await getCurrentUser().catch(() => null);
   let userVote: 1 | -1 | null = null;
 
   if (currentUser) {
