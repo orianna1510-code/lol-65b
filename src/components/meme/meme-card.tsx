@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { timeAgo } from "@/lib/utils";
+import { VoteButtons } from "./vote-buttons";
 import type { FeedMeme } from "@/lib/validations/feed";
 
 interface MemeCardProps {
@@ -59,37 +60,14 @@ export function MemeCard({ meme }: MemeCardProps) {
         </div>
       </Link>
 
-      {/* Footer: Score + caption */}
+      {/* Footer: Vote + caption */}
       <div className="px-4 py-3">
         <div className="flex items-center gap-3">
-          {/* Vote buttons (visual only — wired in Phase 5) */}
-          <div className="flex items-center gap-1 font-mono text-sm">
-            <button
-              className="text-zinc-600 transition-colors hover:text-mint"
-              aria-label="Upvote"
-              disabled
-            >
-              ▲
-            </button>
-            <span
-              className={`min-w-[2ch] text-center font-bold ${
-                meme.score > 0
-                  ? "text-mint"
-                  : meme.score < 0
-                    ? "text-error"
-                    : "text-zinc-500"
-              }`}
-            >
-              {meme.score}
-            </span>
-            <button
-              className="text-zinc-600 transition-colors hover:text-error"
-              aria-label="Downvote"
-              disabled
-            >
-              ▼
-            </button>
-          </div>
+          <VoteButtons
+            memeId={meme.id}
+            initialScore={meme.score}
+            initialUserVote={meme.userVote}
+          />
 
           {/* Caption */}
           <p className="min-w-0 flex-1 truncate font-mono text-xs text-zinc-500">

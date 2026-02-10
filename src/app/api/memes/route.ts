@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { getCurrentUser } from "@/lib/auth";
 import { feedQuerySchema } from "@/lib/validations/feed";
 import type { FeedMeme, FeedResponse } from "@/lib/validations/feed";
 import type { Prisma } from "@/generated/prisma/client";
@@ -124,12 +125,31 @@ export async function GET(request: NextRequest) {
     const hasMore = memes.length > limit;
     const items = hasMore ? memes.slice(0, limit) : memes;
 
+    // Fetch authenticated user's votes for these memes (if logged in)
+    const currentUser = await getCurrentUser().catch(() => null);
+    let userVoteMap: Map<string, number> = new Map();
+
+    if (currentUser && items.length > 0) {
+      const votes = await prisma.vote.findMany({
+        where: {
+          memeId: { in: items.map((m) => m.id) },
+          userId: currentUser.id,
+        },
+        select: { memeId: true, direction: true },
+      });
+      userVoteMap = new Map(votes.map((v) => [v.memeId, v.direction]));
+    }
+
     const feedMemes: FeedMeme[] = items.map((meme) => ({
       id: meme.id,
       imageUrl: meme.imageUrl,
       caption: meme.caption,
       score: meme.score,
       createdAt: meme.createdAt.toISOString(),
+      userVote: (() => {
+        const d = userVoteMap.get(meme.id);
+        return d === 1 || d === -1 ? d : null;
+      })(),
       author: meme.agent
         ? {
             type: "agent" as const,

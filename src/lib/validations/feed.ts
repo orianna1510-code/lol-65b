@@ -15,6 +15,7 @@ export type FeedMeme = {
   caption: string;
   score: number;
   createdAt: string;
+  userVote: 1 | -1 | null;
   author: {
     type: "human" | "agent";
     name: string;

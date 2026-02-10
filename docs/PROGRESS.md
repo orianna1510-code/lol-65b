@@ -12,7 +12,7 @@
 | 3 | Meme Generation Engine | `done` | 5 | 2026-02-08 | Provider abstraction, prompt safety, caption overlay, Z Fighter + Codex review |
 | 4 | Core Feed | `done` | 6 | 2026-02-09 | Feed API, cursor pagination, sort/period, infinite scroll, Codex-reviewed |
 | — | BYOK (cross-cutting) | `done` | 7 | 2026-02-09 | Encrypted provider key storage, BYOK enforcement, Settings UI, agent key API, Codex + Beerus reviewed |
-| 5 | Meme Interactions (MVP!) | `pending` | — | — | — |
+| 5 | Meme Interactions (MVP!) | `done` | 8 | 2026-02-09 | Vote API, optimistic UI, detail page, share button, Codex-reviewed (6 findings, all fixed) |
 | 6 | Comments System | `pending` | — | — | — |
 | 7 | Agent & User Profiles | `pending` | — | — | — |
 | 8 | Agent REST API | `pending` | — | — | — |
@@ -22,7 +22,7 @@
 
 ## Milestones
 
-- [ ] **MVP** — Phase 5 complete (generation + feed + voting)
+- [x] **MVP** — Phase 5 complete (generation + feed + voting)
 - [ ] **Social Platform** — Phase 7 complete (comments + profiles)
 - [ ] **Agent Ecosystem** — Phase 10 complete (API + communities + autonomous bots)
 - [ ] **Public Launch** — Phase 11 complete (deployed and live)
@@ -93,6 +93,17 @@
 - **Issues encountered**: Z Fighter agents couldn't resolve NVM/node paths (known WSL issue); fighters never wrote code before lead finished
 - **Resolution**: Lead completed everything directly; fighters shut down post-mission
 
+### Phase 5 (MVP!) — 2026-02-09
+- **Session**: Session 8
+- **Commit**: (pending)
+- **Duration**: ~15min
+- **Approach**: Direct build + Codex cross-model review (6 findings, all fixed)
+- **Files**: 7 new, 4 modified
+- **Key additions**: Vote API endpoint (POST /api/memes/[id]/vote) with Serializable transaction + P2002 race handling, VoteButtons component with ref-based guard + functional state updates for optimistic UI, meme detail page (/meme/[id]) with full-size image + metadata, ShareButton (copy link with clipboard API + fallback), MemeMetaDisplay (prompt/model/date transparency), feed API extended with userVote per meme
+- **Codex findings fixed**: (1) HIGH — vote transaction race condition: added Serializable isolation + P2002 catch, (2) MEDIUM — stale closure in optimistic updates: functional setScore/setUserVote, (3) MEDIUM — submitting guard bypass: ref-based instead of state-based, (4-5) LOW — unsafe direction casts: runtime validation, (6) LOW — execCommand fallback: check return value
+- **Issues encountered**: None — cleanest phase yet
+- **MVP milestone reached**: sign up → generate meme → feed → vote → detail page
+
 <!-- Copy this template for each phase:
 
 ### Phase N — [date]
@@ -133,3 +144,6 @@
 | AES-256-GCM + AAD binding | BYOK | Provider+ownerType+ownerId as AAD prevents ciphertext swapping | 2026-02-09 |
 | keyVersion for encryption rotation | BYOK | Multi-version decrypt + lazy re-encrypt on read | 2026-02-09 |
 | DB-based rate limiting | BYOK | 10 memes/hr per caller; no Redis needed at MVP scale | 2026-02-09 |
+| Serializable vote transactions | 5 | Prevents score drift from concurrent votes; P2002 handled gracefully | 2026-02-09 |
+| Optimistic UI with server reconciliation | 5 | Instant vote feedback; functional state updates prevent stale closures | 2026-02-09 |
+| userVote in feed API response | 5 | Batch-fetch user votes with feed (single extra query) vs per-card fetch | 2026-02-09 |
