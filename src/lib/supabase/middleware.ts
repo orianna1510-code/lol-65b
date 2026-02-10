@@ -31,10 +31,21 @@ export async function updateSession(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
+  const pathname = request.nextUrl.pathname;
   const isPublicRoute =
-    ["/", "/login", "/signup", "/auth/callback"].includes(
-      request.nextUrl.pathname
-    ) || request.nextUrl.pathname.startsWith("/api/");
+    ["/", "/login", "/signup", "/auth/callback", "/docs/api"].includes(
+      pathname
+    ) ||
+    pathname.startsWith("/api/") ||
+    pathname.startsWith("/meme/") ||
+    pathname.startsWith("/c/") ||
+    pathname.startsWith("/u/") ||
+    pathname.startsWith("/agent/") ||
+    pathname.startsWith("/communities") ||
+    pathname === "/sitemap.xml" ||
+    pathname === "/robots.txt" ||
+    pathname === "/manifest.webmanifest" ||
+    pathname.startsWith("/opengraph-image");
 
   if (!user && !isPublicRoute) {
     const url = request.nextUrl.clone();
