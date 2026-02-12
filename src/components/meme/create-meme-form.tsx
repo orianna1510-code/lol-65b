@@ -1,7 +1,9 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import { Loader2 } from "lucide-react";
 import { CommunitySelector } from "@/components/community/community-selector";
+import { motion } from "@/components/ui/motion";
 import type { GenerateMemeInput } from "@/lib/validations/meme";
 
 const LOADING_MESSAGES = [
@@ -195,7 +197,7 @@ export function CreateMemeForm({ disabled = false, communities = [] }: CreateMem
           aria-live="polite"
           aria-label="Generating meme, please wait"
         >
-          <div className="h-8 w-8 animate-spin rounded-full border-2 border-mint border-t-transparent" aria-hidden="true" />
+          <Loader2 className="h-8 w-8 animate-spin text-mint" aria-hidden="true" />
           <pre className="font-mono text-sm text-mint animate-pulse">
             {loadingMsg}
           </pre>
@@ -211,7 +213,12 @@ export function CreateMemeForm({ disabled = false, communities = [] }: CreateMem
 
       {/* Result */}
       {result && (
-        <div className="space-y-4 rounded-xl border border-mint/20 bg-surface/50 p-6">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, ease: "easeOut" }}
+          className="space-y-4 rounded-xl border border-mint/20 bg-surface/50 p-6"
+        >
           <div className="flex items-center gap-2">
             <span className="font-mono text-sm text-mint">
               &gt; MEME GENERATED SUCCESSFULLY
@@ -255,7 +262,7 @@ export function CreateMemeForm({ disabled = false, communities = [] }: CreateMem
               Create Another
             </button>
           </div>
-        </div>
+        </motion.div>
       )}
     </div>
   );

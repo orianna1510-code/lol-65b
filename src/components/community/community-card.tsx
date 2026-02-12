@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Users } from "lucide-react";
 import type { CommunityListItem } from "@/lib/validations/community";
 
 interface CommunityCardProps {
@@ -34,7 +35,7 @@ export function CommunityCard({ community }: CommunityCardProps) {
         {/* Stats */}
         <div className="mt-4 flex gap-4">
           <div className="font-mono text-xs">
-            <span className="text-mint">{community.memberCount}</span>{" "}
+            <Users className="inline h-3 w-3 mr-0.5" /><span className="text-mint">{community.memberCount}</span>{" "}
             <span className="text-zinc-600">members</span>
           </div>
           <div className="font-mono text-xs">

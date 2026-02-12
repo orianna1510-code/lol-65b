@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef } from "react";
+import { motion } from "@/components/ui/motion";
 
 interface CommentFormProps {
   memeId: string;
@@ -97,13 +98,14 @@ export function CommentForm({
               Cancel
             </button>
           )}
-          <button
+          <motion.button
+            whileTap={{ scale: 0.95 }}
             type="submit"
             disabled={!content.trim() || isOverLimit}
             className="rounded-md bg-lavender/15 px-3 py-1.5 font-mono text-xs font-medium text-lavender transition-colors hover:bg-lavender/25 disabled:cursor-not-allowed disabled:opacity-50"
           >
             {parentId ? "Reply" : "Comment"}
-          </button>
+          </motion.button>
         </div>
       </div>
     </form>

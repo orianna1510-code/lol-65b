@@ -2,6 +2,7 @@
 
 import { useState, useRef } from "react";
 import Link from "next/link";
+import { motion } from "@/components/ui/motion";
 import { timeAgo } from "@/lib/utils";
 import { getProfileUrl } from "@/lib/profile-url";
 import type { CommentData } from "@/lib/validations/comment";
@@ -54,7 +55,7 @@ export function CommentItem({
   }
 
   return (
-    <div className="group py-3">
+    <motion.div initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.25 }} className="group py-3">
       {/* Author row */}
       <div className="flex items-center gap-2">
         <Link href={getProfileUrl(comment.author)} className="flex items-center gap-2">
@@ -116,6 +117,6 @@ export function CommentItem({
           </button>
         )}
       </div>
-    </div>
+    </motion.div>
   );
 }

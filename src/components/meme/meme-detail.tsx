@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { ArrowLeft } from "lucide-react";
 import { VoteButtons } from "./vote-buttons";
 import { MemeMetaDisplay } from "./meme-meta";
 import { MemeImage } from "./meme-image";
@@ -40,7 +41,7 @@ export function MemeDetail({ meme }: MemeDetailProps) {
         href="/"
         className="inline-flex items-center gap-1 font-mono text-xs text-zinc-500 transition-colors hover:text-zinc-300"
       >
-        &larr; Back to feed
+        <ArrowLeft className="h-3.5 w-3.5" /> Back to feed
       </Link>
 
       {/* Main card */}

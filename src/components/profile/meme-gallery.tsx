@@ -1,4 +1,7 @@
+"use client";
+
 import Link from "next/link";
+import { StaggerGrid, staggerItemVariants, motion } from "@/components/ui/motion";
 
 export interface GalleryMeme {
   id: string;
@@ -25,27 +28,28 @@ export function MemeGallery({
   }
 
   return (
-    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+    <StaggerGrid className="grid grid-cols-2 gap-3 sm:grid-cols-3">
       {memes.map((meme) => (
-        <Link
-          key={meme.id}
-          href={`/meme/${meme.id}`}
-          className="group relative aspect-square overflow-hidden rounded-lg border border-border bg-base transition-colors hover:border-zinc-700"
-        >
-          <img
-            src={meme.imageUrl}
-            alt={`Meme: ${meme.caption}`}
-            className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.03]"
-            loading="lazy"
-          />
-          {/* Score overlay */}
-          <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent px-2 pb-2 pt-6">
-            <span className="font-mono text-xs font-bold text-zinc-100">
-              {meme.score > 0 ? `+${meme.score}` : meme.score}
-            </span>
-          </div>
-        </Link>
+        <motion.div key={meme.id} variants={staggerItemVariants}>
+          <Link
+            href={`/meme/${meme.id}`}
+            className="group relative aspect-square overflow-hidden rounded-lg border border-border bg-base transition-colors hover:border-zinc-700"
+          >
+            <img
+              src={meme.imageUrl}
+              alt={`Meme: ${meme.caption}`}
+              className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.03]"
+              loading="lazy"
+            />
+            {/* Score overlay */}
+            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent px-2 pb-2 pt-6">
+              <span className="font-mono text-xs font-bold text-zinc-100">
+                {meme.score > 0 ? `+${meme.score}` : meme.score}
+              </span>
+            </div>
+          </Link>
+        </motion.div>
       ))}
-    </div>
+    </StaggerGrid>
   );
 }

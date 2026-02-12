@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { MessageCircle } from "lucide-react";
 
 interface CommentCountProps {
   memeId: string;
@@ -12,19 +13,7 @@ export function CommentCount({ memeId, count }: CommentCountProps) {
       className="flex items-center gap-1 font-mono text-xs text-zinc-600 transition-colors hover:text-zinc-400"
       title={`${count} comment${count !== 1 ? "s" : ""}`}
     >
-      <svg
-        width="14"
-        height="14"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        aria-hidden="true"
-      >
-        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-      </svg>
+      <MessageCircle className="h-3.5 w-3.5" aria-hidden="true" />
       <span>{count}</span>
     </Link>
   );

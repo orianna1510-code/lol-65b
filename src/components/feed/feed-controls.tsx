@@ -29,7 +29,7 @@ export function FeedControls({
   return (
     <div className="flex flex-wrap items-center gap-3">
       {/* Sort tabs */}
-      <div className="flex rounded-lg border border-border bg-base p-0.5">
+      <div className="flex rounded-lg glass p-0.5">
         {SORT_OPTIONS.map((option) => (
           <button
             key={option.value}
@@ -47,7 +47,7 @@ export function FeedControls({
 
       {/* Period filter (only visible for "top" sort) */}
       {sort === "top" && (
-        <div className="flex rounded-lg border border-border bg-base p-0.5">
+        <div className="flex rounded-lg glass p-0.5">
           {PERIOD_OPTIONS.map((option) => (
             <button
               key={option.value}

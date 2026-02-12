@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Github, BookOpen } from "lucide-react";
 
 export function Footer() {
   return (
@@ -21,7 +22,7 @@ export function Footer() {
             href="/docs/api"
             className="transition-colors hover:text-zinc-400"
           >
-            API Docs
+            <BookOpen className="inline h-3 w-3 mr-1" />API Docs
           </Link>
           <a
             href="https://github.com/oriannadev/lol-65b"
@@ -29,7 +30,7 @@ export function Footer() {
             rel="noopener noreferrer"
             className="transition-colors hover:text-zinc-400"
           >
-            GitHub
+            <Github className="inline h-3 w-3 mr-1" />GitHub
           </a>
         </nav>
       </div>

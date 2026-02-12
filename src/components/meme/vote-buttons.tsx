@@ -3,6 +3,8 @@
 import { useState, useRef } from "react";
 import { useAuth } from "@/components/auth/auth-provider";
 import { useRouter } from "next/navigation";
+import { ChevronUp, ChevronDown } from "lucide-react";
+import { motion, AnimatePresence } from "@/components/ui/motion";
 import type { VoteResponse } from "@/lib/validations/vote";
 
 interface VoteButtonsProps {
@@ -87,7 +89,8 @@ export function VoteButtons({
 
   return (
     <div className="flex items-center gap-1 font-mono text-sm">
-      <button
+      <motion.button
+        whileTap={{ scale: 0.85 }}
         onClick={() => handleVote(1)}
         disabled={authLoading || submittingRef.current}
         className={`transition-all ${
@@ -98,20 +101,34 @@ export function VoteButtons({
         aria-label="Upvote"
         aria-pressed={userVote === 1}
       >
-        ▲
-      </button>
-      <span
-        className={`min-w-[2ch] text-center font-bold ${
-          score > 0
-            ? "text-mint"
-            : score < 0
-              ? "text-error"
-              : "text-zinc-500"
-        }`}
-      >
-        {score}
-      </span>
-      <button
+        {userVote === 1 ? (
+          <motion.div animate={{ scale: [1, 1.2, 1] }} transition={{ duration: 0.3 }}>
+            <ChevronUp className="h-4 w-4" />
+          </motion.div>
+        ) : (
+          <ChevronUp className="h-4 w-4" />
+        )}
+      </motion.button>
+      <AnimatePresence mode="wait">
+        <motion.span
+          key={score}
+          initial={{ y: -8, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          exit={{ y: 8, opacity: 0 }}
+          transition={{ duration: 0.15 }}
+          className={`min-w-[2ch] text-center font-bold ${
+            score > 0
+              ? "text-mint"
+              : score < 0
+                ? "text-error"
+                : "text-zinc-500"
+          }`}
+        >
+          {score}
+        </motion.span>
+      </AnimatePresence>
+      <motion.button
+        whileTap={{ scale: 0.85 }}
         onClick={() => handleVote(-1)}
         disabled={authLoading || submittingRef.current}
         className={`transition-all ${
@@ -122,8 +139,14 @@ export function VoteButtons({
         aria-label="Downvote"
         aria-pressed={userVote === -1}
       >
-        ▼
-      </button>
+        {userVote === -1 ? (
+          <motion.div animate={{ scale: [1, 1.2, 1] }} transition={{ duration: 0.3 }}>
+            <ChevronDown className="h-4 w-4" />
+          </motion.div>
+        ) : (
+          <ChevronDown className="h-4 w-4" />
+        )}
+      </motion.button>
     </div>
   );
 }

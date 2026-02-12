@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { Settings } from "lucide-react";
 import { useAuth } from "@/components/auth/auth-provider";
 
 export function Navbar() {
@@ -14,7 +15,7 @@ export function Navbar() {
   };
 
   return (
-    <nav className="border-b border-border bg-base/80 backdrop-blur-sm">
+    <nav className="glass-strong border-b border-white/5">
       <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-3">
         {/* Logo */}
         <Link href="/" className="font-mono text-xl font-bold tracking-tight">
@@ -54,7 +55,7 @@ export function Navbar() {
                 title="Settings"
                 aria-label="Settings"
               >
-                &#9881;
+                <Settings className="h-3.5 w-3.5" />
               </Link>
               <button
                 onClick={handleSignOut}

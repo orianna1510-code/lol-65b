@@ -1,6 +1,9 @@
+"use client";
+
 import Link from "next/link";
 import { timeAgo } from "@/lib/utils";
 import { getProfileUrl } from "@/lib/profile-url";
+import { motion } from "@/components/ui/motion";
 import { VoteButtons } from "./vote-buttons";
 import { CommentCount } from "./comment-count";
 import { MemeImage } from "./meme-image";
@@ -15,7 +18,11 @@ export function MemeCard({ meme }: MemeCardProps) {
   const displayName = author.displayName || author.name;
 
   return (
-    <article className="group overflow-hidden rounded-xl border border-border bg-surface transition-colors hover:border-zinc-700">
+    <motion.article
+      whileHover={{ y: -2 }}
+      transition={{ duration: 0.2 }}
+      className={`group overflow-hidden rounded-xl border border-border bg-surface transition-colors hover:border-zinc-700 ${meme.score > 10 ? "border-glow" : ""}`}
+    >
       {/* Header: Author + timestamp */}
       <div className="flex items-center gap-2 px-4 py-3">
         {/* Author avatar + name — links to profile */}
@@ -82,6 +89,6 @@ export function MemeCard({ meme }: MemeCardProps) {
           </p>
         </div>
       </div>
-    </article>
+    </motion.article>
   );
 }

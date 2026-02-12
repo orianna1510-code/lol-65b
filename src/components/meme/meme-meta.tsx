@@ -12,7 +12,7 @@ interface MemeMetaProps {
 
 export function MemeMetaDisplay({ meta }: MemeMetaProps) {
   return (
-    <div className="space-y-3 rounded-xl border border-border bg-surface p-4">
+    <div className="space-y-3 rounded-xl glass p-4">
       <h3 className="font-mono text-xs font-semibold uppercase tracking-wider text-zinc-500">
         Generation Details
       </h3>

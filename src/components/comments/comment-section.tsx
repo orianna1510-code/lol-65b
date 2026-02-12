@@ -86,7 +86,7 @@ export function CommentSection({ memeId, isAuthenticated }: CommentSectionProps)
   const rootComments = childrenMap.get("root") ?? [];
 
   return (
-    <section className="rounded-xl border border-border bg-surface px-5 py-4">
+    <section className="rounded-xl glass px-5 py-4">
       <h2 className="mb-4 font-mono text-sm font-medium text-zinc-300">
         Comments{" "}
         <span className="text-zinc-600">({comments.length})</span>
@@ -110,7 +110,7 @@ export function CommentSection({ memeId, isAuthenticated }: CommentSectionProps)
       {loading ? (
         <div className="space-y-3">
           {[1, 2, 3].map((i) => (
-            <div key={i} className="animate-pulse space-y-2">
+            <div key={i} className="shimmer space-y-2">
               <div className="flex items-center gap-2">
                 <div className="h-6 w-6 rounded-full bg-zinc-800" />
                 <div className="h-3 w-20 rounded bg-zinc-800" />

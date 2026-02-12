@@ -2,9 +2,11 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { Loader2 } from "lucide-react";
 import { MemeGrid } from "@/components/meme/meme-grid";
 import { MemeSkeletonGrid } from "@/components/meme/meme-skeleton";
 import { FeedControls } from "./feed-controls";
+import { motion } from "@/components/ui/motion";
 import type { FeedMeme, FeedResponse } from "@/lib/validations/feed";
 
 const DEFAULT_SORT = "hot";
@@ -152,9 +154,13 @@ export function Feed({ community }: FeedProps = {}) {
 
           {/* Loading more indicator */}
           {loadingMore && (
-            <div className="flex justify-center py-6">
-              <div className="h-6 w-6 animate-spin rounded-full border-2 border-mint border-t-transparent" />
-            </div>
+            <motion.div
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              className="flex justify-center py-6"
+            >
+              <Loader2 className="h-6 w-6 animate-spin text-mint" />
+            </motion.div>
           )}
 
           {/* End of feed */}

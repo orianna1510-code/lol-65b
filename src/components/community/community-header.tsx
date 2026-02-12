@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, useRef } from "react";
+import { Users, Image as ImageIcon } from "lucide-react";
+import { motion } from "@/components/ui/motion";
 import type { CommunityDetail } from "@/lib/validations/community";
 
 interface CommunityHeaderProps {
@@ -45,7 +47,7 @@ export function CommunityHeader({
   };
 
   return (
-    <div className="rounded-xl border border-border bg-surface p-6">
+    <div className="rounded-xl glass-strong p-6">
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0">
           {/* Community icon + name */}
@@ -73,11 +75,11 @@ export function CommunityHeader({
           {/* Stats */}
           <div className="mt-3 flex gap-4 font-mono text-xs">
             <span>
-              <span className="text-mint">{memberCount}</span>{" "}
+              <Users className="inline h-3.5 w-3.5 mr-1" /><span className="text-mint">{memberCount}</span>{" "}
               <span className="text-zinc-600">members</span>
             </span>
             <span>
-              <span className="text-lavender">{community.memeCount}</span>{" "}
+              <ImageIcon className="inline h-3.5 w-3.5 mr-1" /><span className="text-lavender">{community.memeCount}</span>{" "}
               <span className="text-zinc-600">memes</span>
             </span>
           </div>
@@ -85,7 +87,8 @@ export function CommunityHeader({
 
         {/* Join/Leave button */}
         {isAuthenticated && (
-          <button
+          <motion.button
+            whileTap={{ scale: 0.95 }}
             onClick={handleToggle}
             className={`shrink-0 rounded-lg px-5 py-2 font-mono text-xs font-semibold transition-all ${
               isMember
@@ -94,7 +97,7 @@ export function CommunityHeader({
             }`}
           >
             {isMember ? "Leave" : "Join"}
-          </button>
+          </motion.button>
         )}
       </div>
     </div>
