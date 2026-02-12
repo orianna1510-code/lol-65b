@@ -25,6 +25,8 @@
     "@prisma/client": "^7.3.0",
     "@supabase/ssr": "^0.8.0",
     "@supabase/supabase-js": "^2.95.3",
+    "@upstash/ratelimit": "^2.0.8",
+    "@upstash/redis": "^1.36.2",
     "clsx": "^2.1.1",
     "dotenv": "^17.2.4",
     "next": "16.1.6",

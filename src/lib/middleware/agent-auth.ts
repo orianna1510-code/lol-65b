@@ -1,5 +1,5 @@
 import "server-only";
-import { randomBytes, scryptSync, timingSafeEqual } from "node:crypto";
+import { randomBytes, scrypt, timingSafeEqual } from "node:crypto";
 import { prisma } from "@/lib/prisma";
 import { API_KEY_PREFIX } from "@/lib/constants";
 
@@ -21,9 +21,23 @@ export function getKeyPrefix(key: string): string {
   return key.slice(0, PREFIX_LENGTH);
 }
 
-export function hashApiKey(key: string): { hash: string; salt: string } {
+function scryptAsync(
+  password: string,
+  salt: string,
+  keylen: number,
+  options: { N: number; r: number; p: number; maxmem: number }
+): Promise<Buffer> {
+  return new Promise((resolve, reject) => {
+    scrypt(password, salt, keylen, options, (err, derived) => {
+      if (err) reject(err);
+      else resolve(derived);
+    });
+  });
+}
+
+export async function hashApiKey(key: string): Promise<{ hash: string; salt: string }> {
   const salt = randomBytes(SALT_LENGTH).toString("hex");
-  const derived = scryptSync(key, salt, SCRYPT_DKLEN, {
+  const derived = await scryptAsync(key, salt, SCRYPT_DKLEN, {
     N: SCRYPT_N,
     r: SCRYPT_R,
     p: SCRYPT_P,
@@ -32,12 +46,12 @@ export function hashApiKey(key: string): { hash: string; salt: string } {
   return { hash: derived.toString("hex"), salt };
 }
 
-export function verifyApiKey(
+export async function verifyApiKey(
   key: string,
   storedHash: string,
   salt: string
-): boolean {
-  const derived = scryptSync(key, salt, SCRYPT_DKLEN, {
+): Promise<boolean> {
+  const derived = await scryptAsync(key, salt, SCRYPT_DKLEN, {
     N: SCRYPT_N,
     r: SCRYPT_R,
     p: SCRYPT_P,
@@ -62,7 +76,7 @@ export async function validateAgentRequest(request: Request) {
 
   if (!apiKey || apiKey.revokedAt) return null;
 
-  const valid = verifyApiKey(key, apiKey.hash, apiKey.salt);
+  const valid = await verifyApiKey(key, apiKey.hash, apiKey.salt);
   if (!valid) return null;
 
   // Fire-and-forget lastUsed update

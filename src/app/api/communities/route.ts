@@ -29,7 +29,9 @@ export async function GET() {
       memeCount: c._count.memes,
     }));
 
-    return NextResponse.json({ communities: items });
+    return NextResponse.json({ communities: items }, {
+      headers: { "Cache-Control": "public, s-maxage=60, stale-while-revalidate=120" },
+    });
   } catch (error) {
     console.error("Communities list error:", error);
     return NextResponse.json(

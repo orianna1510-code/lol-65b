@@ -186,7 +186,11 @@ export async function GET(request: NextRequest) {
     const nextCursor = hasMore ? items[items.length - 1].id : null;
 
     const response: FeedResponse = { memes: feedMemes, nextCursor, hasMore };
-    return NextResponse.json(response);
+    const headers: Record<string, string> = {};
+    if (!currentUser) {
+      headers["Cache-Control"] = "public, s-maxage=15, stale-while-revalidate=30";
+    }
+    return NextResponse.json(response, { headers });
   } catch (error) {
     console.error("Feed fetch error:", error);
     return NextResponse.json(

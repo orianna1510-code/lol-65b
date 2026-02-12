@@ -1,43 +1,8 @@
 import "server-only";
-
-/**
- * In-memory sliding window rate limiter.
- * Tracks timestamps of requests per key and checks against window/limit.
- * Auto-cleans stale entries every 5 minutes.
- */
-
-interface RateLimitEntry {
-  timestamps: number[];
-}
-
-const store = new Map<string, RateLimitEntry>();
-
-// Auto-cleanup every 5 minutes
-const CLEANUP_INTERVAL = 5 * 60 * 1000;
-let cleanupTimer: ReturnType<typeof setInterval> | null = null;
-
-function ensureCleanup() {
-  if (cleanupTimer) return;
-  cleanupTimer = setInterval(() => {
-    const now = Date.now();
-    for (const [key, entry] of store) {
-      entry.timestamps = entry.timestamps.filter((t) => now - t < 3600_000);
-      if (entry.timestamps.length === 0) store.delete(key);
-    }
-  }, CLEANUP_INTERVAL);
-  // Don't block process exit
-  if (cleanupTimer && typeof cleanupTimer === "object" && "unref" in cleanupTimer) {
-    cleanupTimer.unref();
-  }
-}
+import { Ratelimit } from "@upstash/ratelimit";
+import { redis } from "@/lib/redis";
 
 export type RateLimitTier = "general" | "meme_generation" | "voting";
-
-const TIER_CONFIG: Record<RateLimitTier, { windowMs: number; maxRequests: number }> = {
-  general: { windowMs: 60_000, maxRequests: 60 },
-  meme_generation: { windowMs: 3600_000, maxRequests: 10 },
-  voting: { windowMs: 60_000, maxRequests: 120 },
-};
 
 export interface RateLimitResult {
   allowed: boolean;
@@ -46,45 +11,51 @@ export interface RateLimitResult {
   retryAfterSeconds: number | null;
 }
 
-export function checkRateLimit(
+const ephemeralCache = new Map();
+
+const limiters: Record<RateLimitTier, Ratelimit> = {
+  general: new Ratelimit({
+    redis,
+    limiter: Ratelimit.slidingWindow(60, "60 s"),
+    prefix: "rl:general",
+    ephemeralCache,
+  }),
+  meme_generation: new Ratelimit({
+    redis,
+    limiter: Ratelimit.slidingWindow(10, "3600 s"),
+    prefix: "rl:meme_gen",
+    ephemeralCache,
+  }),
+  voting: new Ratelimit({
+    redis,
+    limiter: Ratelimit.slidingWindow(120, "60 s"),
+    prefix: "rl:voting",
+    ephemeralCache,
+  }),
+};
+
+export async function checkRateLimit(
   agentId: string,
   tier: RateLimitTier
-): RateLimitResult {
-  ensureCleanup();
-
-  const config = TIER_CONFIG[tier];
-  const key = `${agentId}:${tier}`;
-  const now = Date.now();
-  const windowStart = now - config.windowMs;
-
-  let entry = store.get(key);
-  if (!entry) {
-    entry = { timestamps: [] };
-    store.set(key, entry);
-  }
-
-  // Remove expired timestamps
-  entry.timestamps = entry.timestamps.filter((t) => t > windowStart);
-
-  if (entry.timestamps.length >= config.maxRequests) {
-    // Find when the oldest request in the window expires
-    const oldestInWindow = entry.timestamps[0];
-    const retryAfterMs = oldestInWindow + config.windowMs - now;
+): Promise<RateLimitResult> {
+  try {
+    const result = await limiters[tier].limit(agentId);
     return {
-      allowed: false,
-      remaining: 0,
-      limit: config.maxRequests,
-      retryAfterSeconds: Math.ceil(retryAfterMs / 1000),
+      allowed: result.success,
+      remaining: result.remaining,
+      limit: result.limit,
+      retryAfterSeconds: result.success
+        ? null
+        : Math.max(1, Math.ceil((result.reset - Date.now()) / 1000)),
+    };
+  } catch (err) {
+    // Fail-open: if Redis is unreachable, allow the request
+    console.warn("Rate limiter Redis error (failing open):", err);
+    return {
+      allowed: true,
+      remaining: 1,
+      limit: 1,
+      retryAfterSeconds: null,
     };
   }
-
-  // Record this request
-  entry.timestamps.push(now);
-
-  return {
-    allowed: true,
-    remaining: config.maxRequests - entry.timestamps.length,
-    limit: config.maxRequests,
-    retryAfterSeconds: null,
-  };
 }

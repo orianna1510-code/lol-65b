@@ -1,11 +1,12 @@
 import "server-only";
-import { randomUUID } from "node:crypto";
+import { randomBytes, randomUUID } from "node:crypto";
 import { getImageProvider } from "@/lib/providers/image-gen";
 import type { ImageProviderConfig } from "@/lib/providers/image-gen";
 import { checkPromptSafety, sanitizePrompt } from "@/lib/prompt-safety";
 import { addCaptions } from "@/lib/caption-overlay";
 import { uploadMemeImage, deleteMemeImage } from "@/lib/storage";
 import { prisma } from "@/lib/prisma";
+import { redis } from "@/lib/redis";
 
 export interface MemeGenerationInput {
   concept: string;
@@ -73,79 +74,109 @@ function deriveCaption(input: MemeGenerationInput): {
 export async function generateMeme(
   input: MemeGenerationInput
 ): Promise<MemeGenerationResult> {
-  // 1. Safety check — concept AND captions
-  const safetyResult = checkPromptSafety(input.concept);
-  if (!safetyResult.safe) {
-    throw new Error(`Prompt rejected: ${safetyResult.reason}`);
+  // Concurrency guard — one generation at a time per caller
+  const callerId = input.agentId ?? input.userId ?? "anonymous";
+  const lockKey = `meme_gen:lock:${callerId}`;
+  const lockToken = randomBytes(16).toString("hex");
+  let lockAcquired = false;
+
+  try {
+    const locked = await redis.set(lockKey, lockToken, { nx: true, ex: 120 });
+    if (!locked) {
+      throw new Error("A meme generation is already in progress. Please wait for it to complete.");
+    }
+    lockAcquired = true;
+  } catch (err) {
+    // If this is our own "already in progress" error, rethrow
+    if (err instanceof Error && err.message.includes("already in progress")) throw err;
+    // Fail-open: if Redis is unreachable, proceed without guard
+    console.warn("Concurrency guard Redis error (failing open):", err);
   }
 
-  for (const caption of [input.topCaption, input.bottomCaption]) {
-    if (caption) {
-      const captionSafety = checkPromptSafety(caption);
-      if (!captionSafety.safe) {
-        throw new Error(`Caption rejected: ${captionSafety.reason}`);
+  try {
+    // 1. Safety check — concept AND captions
+    const safetyResult = checkPromptSafety(input.concept);
+    if (!safetyResult.safe) {
+      throw new Error(`Prompt rejected: ${safetyResult.reason}`);
+    }
+
+    for (const caption of [input.topCaption, input.bottomCaption]) {
+      if (caption) {
+        const captionSafety = checkPromptSafety(caption);
+        if (!captionSafety.safe) {
+          throw new Error(`Caption rejected: ${captionSafety.reason}`);
+        }
       }
     }
-  }
 
-  // 2. Sanitize + build image prompt
-  const sanitized = sanitizePrompt(input.concept);
-  const imagePrompt = buildImagePrompt(sanitized);
+    // 2. Sanitize + build image prompt
+    const sanitized = sanitizePrompt(input.concept);
+    const imagePrompt = buildImagePrompt(sanitized);
 
-  // 3. Generate image (use caller's key if provided, env fallback for admin/seed)
-  const provider = await getImageProvider(input.providerConfig);
-  let result;
-  try {
-    result = await provider.generate(imagePrompt);
-  } catch (err) {
-    // Sanitize error messages — strip API keys from any error text
-    const rawMsg = err instanceof Error ? err.message : String(err);
-    throw new Error(sanitizeErrorMessage(rawMsg));
-  }
-  const { image, model, provider: providerName } = result;
+    // 3. Generate image (use caller's key if provided, env fallback for admin/seed)
+    const provider = await getImageProvider(input.providerConfig);
+    let result;
+    try {
+      result = await provider.generate(imagePrompt);
+    } catch (err) {
+      // Sanitize error messages — strip API keys from any error text
+      const rawMsg = err instanceof Error ? err.message : String(err);
+      throw new Error(sanitizeErrorMessage(rawMsg));
+    }
+    const { image, model, provider: providerName } = result;
 
-  // 3b. Validate generated image size (prevent storage abuse)
-  const MAX_IMAGE_SIZE = 10 * 1024 * 1024; // 10MB
-  if (image.length > MAX_IMAGE_SIZE) {
-    throw new Error("Generated image exceeds maximum size");
-  }
+    // 3b. Validate generated image size (prevent storage abuse)
+    const MAX_IMAGE_SIZE = 10 * 1024 * 1024; // 10MB
+    if (image.length > MAX_IMAGE_SIZE) {
+      throw new Error("Generated image exceeds maximum size");
+    }
 
-  // 4. Add captions
-  const { topText, bottomText, displayCaption } = deriveCaption(input);
-  const captionedImage = await addCaptions(image, { topText, bottomText });
+    // 4. Add captions
+    const { topText, bottomText, displayCaption } = deriveCaption(input);
+    const captionedImage = await addCaptions(image, { topText, bottomText });
 
-  // 5. Upload to storage first (generate ID upfront)
-  const memeId = randomUUID();
-  const imageUrl = await uploadMemeImage(captionedImage, memeId);
+    // 5. Upload to storage first (generate ID upfront)
+    const memeId = randomUUID();
+    const imageUrl = await uploadMemeImage(captionedImage, memeId);
 
-  // 6. Create DB record with final URL (atomic — no placeholder)
-  try {
-    const meme = await prisma.meme.create({
-      data: {
-        id: memeId,
-        imageUrl,
-        caption: displayCaption,
-        promptUsed: imagePrompt,
-        modelUsed: `${providerName}/${model}`,
-        userId: input.userId ?? null,
-        agentId: input.agentId ?? null,
-        communityId: input.communityId ?? null,
-      },
-    });
+    // 6. Create DB record with final URL (atomic — no placeholder)
+    try {
+      const meme = await prisma.meme.create({
+        data: {
+          id: memeId,
+          imageUrl,
+          caption: displayCaption,
+          promptUsed: imagePrompt,
+          modelUsed: `${providerName}/${model}`,
+          userId: input.userId ?? null,
+          agentId: input.agentId ?? null,
+          communityId: input.communityId ?? null,
+        },
+      });
 
-    return {
-      id: meme.id,
-      imageUrl: meme.imageUrl,
-      caption: meme.caption,
-      promptUsed: meme.promptUsed ?? imagePrompt,
-      modelUsed: meme.modelUsed ?? `${providerName}/${model}`,
-      score: meme.score,
-      createdAt: meme.createdAt,
-    };
-  } catch (dbError) {
-    // DB insert failed — clean up the uploaded image
-    await deleteMemeImage(memeId).catch(() => {});
-    throw dbError;
+      return {
+        id: meme.id,
+        imageUrl: meme.imageUrl,
+        caption: meme.caption,
+        promptUsed: meme.promptUsed ?? imagePrompt,
+        modelUsed: meme.modelUsed ?? `${providerName}/${model}`,
+        score: meme.score,
+        createdAt: meme.createdAt,
+      };
+    } catch (dbError) {
+      // DB insert failed — clean up the uploaded image
+      await deleteMemeImage(memeId).catch(() => {});
+      throw dbError;
+    }
+  } finally {
+    // Release lock only if we still own it (atomic compare-and-delete via Lua)
+    if (lockAcquired) {
+      await redis.eval(
+        `if redis.call("get",KEYS[1])==ARGV[1] then return redis.call("del",KEYS[1]) else return 0 end`,
+        [lockKey],
+        [lockToken],
+      ).catch(() => {});
+    }
   }
 }
 

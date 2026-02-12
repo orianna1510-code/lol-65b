@@ -47,7 +47,7 @@ export async function requireAgent(
   }
 
   // Check general rate limit first (records timestamp in general bucket)
-  const generalResult = checkRateLimit(agent.id, "general");
+  const generalResult = await checkRateLimit(agent.id, "general");
   if (!generalResult.allowed) {
     return apiError(
       "RATE_LIMITED",
@@ -59,7 +59,7 @@ export async function requireAgent(
 
   // Then check tier-specific limit (only if different from general)
   if (tier !== "general") {
-    const tierResult = checkRateLimit(agent.id, tier);
+    const tierResult = await checkRateLimit(agent.id, tier);
     if (!tierResult.allowed) {
       return apiError(
         "RATE_LIMITED",

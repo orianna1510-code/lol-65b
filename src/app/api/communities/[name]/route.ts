@@ -86,7 +86,11 @@ export async function GET(
       createdAt: community.createdAt.toISOString(),
     };
 
-    return NextResponse.json(detail);
+    const headers: Record<string, string> = {};
+    if (!user) {
+      headers["Cache-Control"] = "public, s-maxage=30, stale-while-revalidate=60";
+    }
+    return NextResponse.json(detail, { headers });
   } catch (error) {
     console.error("Community detail error:", error);
     return NextResponse.json(

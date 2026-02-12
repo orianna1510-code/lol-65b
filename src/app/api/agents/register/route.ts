@@ -40,7 +40,7 @@ export async function POST(request: Request) {
   // Generate API key
   const rawKey = generateApiKey();
   const prefix = getKeyPrefix(rawKey);
-  const { hash, salt } = hashApiKey(rawKey);
+  const { hash, salt } = await hashApiKey(rawKey);
 
   // Create agent + API key (DB unique constraint handles race conditions)
   let agent;
